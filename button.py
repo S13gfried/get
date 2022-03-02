@@ -1,5 +1,5 @@
 import RPi.GPIO as io
-print("frog")
+print("legushque")
 io.setmode(io.BCM)
 
 io.setup(14, io.OUT)
