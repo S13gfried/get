@@ -24,7 +24,7 @@ def bin2decNormalized(source):
 
 def dacWrite(dacPins, value):
     vector = dec2bin(value, len(dacPins))
-    io.write(dacPins, vector)
+    io.output(dacPins, vector)
 
 def voltageBinarySearch(comp, pins):
     digits = len(pins)
@@ -33,7 +33,7 @@ def bruteSearch(comp, pins):
     scale = 2**len(pins)
     for value in range(scale):
         dacWrite(dacPins, value)
-        if io.read(comp) == 0:
+        if io.input(comp) == 0:
             return value
 
 
