@@ -13,6 +13,7 @@ indicator = [21, 20, 16, 12, 7, 8, 25, 24]
 io.setmode(io.BCM)
 
 io.setup(dacPins, io.OUT)
+io.setup(indicator, io.OUT)
 io.setup(analogPowerPin, io.OUT, initial = 1)
 io.setup(comparatorPin, io.IN)
 
@@ -33,39 +34,41 @@ def dacWrite(dacPins, value):
 
 def voltageBinarySearch(comp, pins):
     digits = len(pins)
-    scale = 2**(digits - 1)
+    scale = int(2**(digits - 1))
     reference = scale - 1 #!
 
     vector = []
 
     for i in range(digits):
-        dacWrite(reference)
-        time.sleep(0.00001)
-        scale /= 2
+        dacWrite(dacPins, reference)
+        time.sleep(0.0001)
+        scale = int(scale / 2)
         if io.input(comparatorPin) == 0:
-            vector.append(1)
-            reference += scale
-        else:
             vector.append(0)
             reference -= scale
+        else:
+            vector.append(1)
+            reference += scale
+    return vector
 
 
 def bruteSearch(comp, pins):
     scale = 2**len(pins)
     for value in range(scale):
         dacWrite(dacPins, value)
-        time.sleep(0.00001)
+        time.sleep(0.0001)
         if io.input(comp) == 0:
             return value
 
 def healthbar(leds, value):
-    io.output(leds, 0)
     size = len(leds)
-    thres = size*(value + 1)
+    thres = (size+1)*value
     for i in range(size):
-        if thres < i + 1:
-            break
-        io.output(leds[i], 1)
+        if thres >= i + 1:
+            io.output(leds[i], 1) 
+        else:
+            io.output(leds[i], 0) 
+        
 
 try:
     while True:
@@ -74,6 +77,6 @@ try:
         value = bin2decNormalized(vec)
         healthbar(indicator, value)
         print("{:.3f}".format(value * 3.3) + " VOLTS")
-        time.sleep(0.5)
+        time.sleep(0.02)
 finally:
     io.cleanup()   
