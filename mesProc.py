@@ -10,4 +10,4 @@ figure, axes = plt.subplots(figsize=(4, 7), dpi = 300)
 
 axes.plot(data)
 figure.savefig("plot.png")
-plt.show
+plt.show()
