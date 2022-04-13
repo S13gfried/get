@@ -13,7 +13,6 @@ indicator = [21, 20, 16, 12, 7, 8, 25, 24]
 io.setmode(io.BCM)
 
 io.setup(dacPins, io.OUT)
-io.setup(indicator, io.OUT)
 io.setup(analogPowerPin, io.OUT, initial = 1)
 io.setup(comparatorPin, io.IN)
 
@@ -28,47 +27,71 @@ def bin2decNormalized(source):
         scale *= 2
     return sum/scale
 
+def bin2dec(source):
+    sum = 0
+    for digit in source:
+        sum = (sum * 2 + digit)
+        scale *= 2
+    return sum
+
 def dacWrite(dacPins, value):
     vector = dec2bin(value, len(dacPins))
     io.output(dacPins, vector)
 
 def voltageBinarySearch(comp, pins):
     digits = len(pins)
-    scale = int(2**(digits - 1))
+    scale = 2**(digits - 1)
     reference = scale - 1 #!
 
     vector = []
 
     for i in range(digits):
         dacWrite(dacPins, reference)
-        time.sleep(0.0001)
-        scale = int(scale / 2)
+        time.sleep(0.00001)
+        scale /= 2
         if io.input(comparatorPin) == 0:
-            vector.append(0)
-            reference -= scale
-        else:
             vector.append(1)
             reference += scale
-    return vector
+        else:
+            vector.append(0)
+            reference -= scale
 
+def getVoltage(comp, pins):
+
+    size = len(pins)
+    vector = [0]*size
+
+    sum = 1
+
+    for i in range(size):
+        vector[i] = 1
+        io.output(pins, vector)
+        time.sleep(0.0001)
+
+        if (io.input(comp) == 0):
+            vector[i] = 0
+        else:
+            sum += 1
+
+        sum *= 2
+    return sum
 
 def bruteSearch(comp, pins):
     scale = 2**len(pins)
     for value in range(scale):
         dacWrite(dacPins, value)
-        time.sleep(0.0001)
+        time.sleep(0.00001)
         if io.input(comp) == 0:
             return value
 
 def healthbar(leds, value):
+    io.output(leds, 0)
     size = len(leds)
-    thres = (size+1)*value
+    thres = size*(value + 1)
     for i in range(size):
-        if thres >= i + 1:
-            io.output(leds[i], 1) 
-        else:
-            io.output(leds[i], 0) 
-        
+        if thres < i + 1:
+            break
+        io.output(leds[i], 1)
 
 try:
     while True:
@@ -77,6 +100,6 @@ try:
         value = bin2decNormalized(vec)
         healthbar(indicator, value)
         print("{:.3f}".format(value * 3.3) + " VOLTS")
-        time.sleep(0.02)
+        time.sleep(0.5)
 finally:
     io.cleanup()   
